@@ -5,7 +5,6 @@ from mitmproxy import ctx
 from mitmproxy import command
 from mitmproxy import exceptions
 from mitmproxy import flow
-from mitmproxy import http
 from mitmproxy import contentviews
 from mitmproxy.utils import strutils
 import mitmproxy.types
@@ -379,8 +378,6 @@ class ConsoleAddon:
         # but for now it is.
         if not flow:
             raise exceptions.CommandError("No flow selected.")
-        if part in ("response-headers", "response-body", "set-cookies"):
-            flow.response = http.HTTPResponse.make()
         if part == "cookies":
             self.master.switch_view("edit_focus_cookies")
         elif part == "form":
@@ -398,6 +395,8 @@ class ConsoleAddon:
                 message = flow.request
             else:
                 message = flow.response
+            if not message:
+                raise exceptions.CommandError("Flow has no {}.".format(part.split("-")[0]))
             c = self.master.spawn_editor(message.get_content(strict=False) or b"")
             # Fix an issue caused by some editors when editing a
             # request/response body. Many editors make it hard to save a
