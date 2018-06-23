@@ -8,6 +8,8 @@ class CommandLanguageLexer:
         "WHITESPACE",
         "COMMAND",
         "PLAIN_STR",
+        "LPAREN",
+        "RPAREN",
         "QUOTED_STR"
     )
     states = (
@@ -19,6 +21,8 @@ class CommandLanguageLexer:
 
     # Main(INITIAL) state
     t_ignore_WHITESPACE = r"\s+"
+    t_LPAREN = r"\("
+    t_RPAREN = r"\)"
 
     def t_COMMAND(self, t):
         r"""\w+(\.\w+)+"""
@@ -32,7 +36,7 @@ class CommandLanguageLexer:
         return t
 
     def t_PLAIN_STR(self, t):
-        r"""[^\s]+"""
+        r"""[^\(\)\s]+"""
         t.type = self.oneword_commands.get(t.value, "PLAIN_STR")
         return t
 
@@ -51,8 +55,8 @@ def create_lexer(cmdstr: str, oneword_commands: typing.Sequence[str]) -> lex.Lex
     return command_lexer.lexer
 
 
-def get_tokens(cmdstr: str, state="interactive") -> typing.List[str]:
+def get_tokens(cmdstr: str, state="interactive") -> typing.List[lex.LexToken]:
     lexer = create_lexer(cmdstr, [])
     # Switching to the other state
     lexer.begin(state)
-    return [token.value for token in lexer]
+    return list(lexer)
