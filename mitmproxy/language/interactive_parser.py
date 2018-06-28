@@ -7,6 +7,7 @@ from mitmproxy import exceptions
 from mitmproxy.language.lexer import CommandLanguageLexer
 import mitmproxy.types
 
+
 class InteractivePartialParser:
     # the list of possible tokens is always required
     tokens = CommandLanguageLexer.tokens
@@ -25,26 +26,39 @@ class InteractivePartialParser:
             self.text = [('text', "")]
 
     def p_command_call_no_parentheses(self, p):
-        """command_call_no_parentheses : corps argument_list"""
-        command, params = self.check_command(p[1])
-        rem_params = params[len(p[2]):]
+        """command_call_no_parentheses : corps eorws argument_list eorws"""
+        command, params = p[1]
+        st = [p[2], *p[3], p[4]]
 
-        remhelp: typing.List[str] = []
-        for x in rem_params:
-            remt = mitmproxy.types.CommandTypes.get(x, None)
-            remhelp.append(remt.display)
-        rem_text = ("commander_hint", " ".join(remhelp))
-        p[0] = [command, *p[2], rem_text]
+        stuff = [command] + [s for s in st if s]
+        if stuff[-1][1].isspace():
+            args = p[3] + [("text", "")]
+        else:
+            args = p[3]
+        rem_params = params[len(args):]
+
+        remhelp = self.get_remhelp(rem_params)
+        rem_text = ("commander_hint", " " + " ".join(remhelp))
+        pt = [stuff, rem_text]
+        p[0] = pt
+
+    def p_arglist(self, p):
+        """arglist : eorws argument_list eorws"""
+        args = [arg for arg in [p[1], *p[2], p[3]] if arg]
+        if args[-1][1].isspace():
+            args.append(("text", ""))
+        print(args)
+        p[0] = args
 
     def p_argument_list(self, p):
         """argument_list : empty
                          | argument
-                         | argument_list argument"""
+                         | argument_list eorws argument"""
         if len(p) == 2:
             p[0] = [] if p[1] is None else [p[1]]
         else:
             p[0] = p[1]
-            p[0].append(p[2])
+            p[0].append(("text", p[2][1] + p[3][1]))
 
     def p_argument(self, p):
         """argument : PLAIN_STR
@@ -57,44 +71,54 @@ class InteractivePartialParser:
             p[0] = ("text", p[1])
 
     def p_command_call_with_parentheses(self, p):
-        """command_call_with_parentheses : corps LPAREN argument_list RPAREN
-           command_call_with_parentheses : corps LPAREN argument_list
-           command_call_with_parentheses : corps LPAREN"""
+        """command_call_with_parentheses : corps eorws lparen arglist rparen eorws
+           command_call_with_parentheses : corps eorws lparen arglist
+           command_call_with_parentheses : corps eorws lparen eorws"""
+        command, params = p[1]
 
-        command, params = self.check_command(p[1])
-        if len(p) == 5:
-            text = [command, ("text", "("), *p[3], ("text", ")")]
-        elif len(p) == 4:
-            rem_params = params[len(p[3]):]
-            remhelp: typing.List[str] = []
-            for x in rem_params:
-                remt = mitmproxy.types.CommandTypes.get(x, None)
-                remhelp.append(remt.display)
-            if " ".join(remhelp):
-                rem_text = ("commander_hint", " ".join(remhelp))
-                text = [command, ("text", "("), *p[3], rem_text, ("text", ")")]
+        if len(p) == 7:
+            text = [command, *p[2:4], *p[4], *p[5:7]]
+        elif len(p) == 5:
+            rem_params = params[len(p[4]):]
+            remhelp = self.get_remhelp(rem_params)
+            if remhelp:
+                rem_text = ("commander_hint", " " + " ".join(remhelp))
+                text = [command, *p[2:4], *p[4], rem_text, ("text", ")")]
             else:
-                text = [command, ("text", "("), *p[3], ("text", ")")]
+                text = [command, *p[2:4], *p[4], ("text", ")")]
         else:
-            remhelp: typing.List[str] = []
-            for x in params:
-                remt = mitmproxy.types.CommandTypes.get(x, None)
-                remhelp.append(remt.display)
+            remhelp = self.get_remhelp(params)
             rem_text = ("commander_hint", " ".join(remhelp))
-            text = [command, ("text", "("), rem_text, ("text", ")")]
-        p[0] = text
+            text = [command, *p[2:5], rem_text, ("text", ")")]
+        # print([textm for textm in text if textm])
+        p[0] = [textm for textm in text if textm]
 
     def p_corps(self, p):
         """corps : PLAIN_STR
                  | COMMAND"""
-        p[0] = p[1]
+        p[0] = self.check_command(p[1])
+
+    def p_lparen(self, p):
+        """lparen : LPAREN"""
+        p[0] = ("text", p[1])
+
+    def p_paren(self, p):
+        """rparen : RPAREN"""
+        p[0] = ("text", p[1])
+
+    def p_eorws(self, p):
+        """eorws : empty
+                 | WHITESPACE"""
+        if p[1] is None:
+            p[0] = ()
+        else:
+            p[0] = ("text", p[1])
 
     def p_empty(self, p):
         """empty :"""
 
     def p_error(self, p):
-        for i, t in enumerate(self.text):
-            self.text[i][0] = "commander_invalid"
+        raise exceptions.CommandError(f"Syntax error at '{p.value}'")
 
 
     def check_command(self, command):
@@ -106,6 +130,12 @@ class InteractivePartialParser:
             params = []
         return command_text, params
 
+    def get_remhelp(self, rem_params):
+        remhelp: typing.List[str] = []
+        for x in rem_params:
+            remt = mitmproxy.types.CommandTypes.get(x, None)
+            remhelp.append(remt.display)
+        return remhelp
 
     def build(self, **kwargs):
         self.parser = yacc.yacc(module=self,

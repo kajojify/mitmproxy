@@ -158,9 +158,10 @@ class CommandManager(mitmproxy.types._CommandBase):
         # elif parts[-1].type == "WHITESPACE":
         #     parts.append("")
         lxr = lexer.create_lexer(cmdstr, self.oneword_commands)
+        lxr.begin("interactive")
         # print(list(lxr))
         # import time
-        # time.sleep(0.5)
+        # time.sleep(10)
         parser = interactive_parser.create_partial_parser(self.commands)
         typer = parser.parse(lxr)
         return typer
