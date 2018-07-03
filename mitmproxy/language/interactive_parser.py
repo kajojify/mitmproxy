@@ -14,10 +14,12 @@ class InteractivePartialParser:
 
     def __init__(self, commands):
         self.commands = commands
+        self.completed = False
         self.text = None
 
     def p_command_call(self, p):
         """command_line : empty
+                        | array
                         | command_call_no_parentheses
                         | command_call_with_parentheses"""
         if p[1]:
@@ -38,8 +40,9 @@ class InteractivePartialParser:
         rem_params = params[len(args):]
 
         remhelp = self.get_remhelp(rem_params)
-        rem_text = ("commander_hint", " " + " ".join(remhelp))
-        pt = [stuff, rem_text]
+        rem_text = [("commander_hint", " ")]
+        rem_text += [("commander_hint", " ".join(remhelp))]
+        pt = [*stuff, *rem_text]
         p[0] = pt
 
     def p_arglist(self, p):
@@ -47,7 +50,6 @@ class InteractivePartialParser:
         args = [arg for arg in [p[1], *p[2], p[3]] if arg]
         if args[-1][1].isspace():
             args.append(("text", ""))
-        print(args)
         p[0] = args
 
     def p_argument_list(self, p):
@@ -64,6 +66,7 @@ class InteractivePartialParser:
         """argument : PLAIN_STR
                     | QUOTED_STR
                     | COMMAND
+                    | array
                     | command_call_with_parentheses"""
         if isinstance(p[1], list):
             p[0] = p[1]
@@ -82,21 +85,44 @@ class InteractivePartialParser:
             rem_params = params[len(p[4]):]
             remhelp = self.get_remhelp(rem_params)
             if remhelp:
-                rem_text = ("commander_hint", " " + " ".join(remhelp))
-                text = [command, *p[2:4], *p[4], rem_text, ("text", ")")]
+                rem_text = [("commander_hint", " ")]
+                rem_text += [("commander_hint", " ".join(remhelp))]
+                text = [command, *p[2:4], *p[4], *rem_text, ("text", ")")]
             else:
                 text = [command, *p[2:4], *p[4], ("text", ")")]
         else:
+            self.completed = True
             remhelp = self.get_remhelp(params)
             rem_text = ("commander_hint", " ".join(remhelp))
             text = [command, *p[2:5], rem_text, ("text", ")")]
         # print([textm for textm in text if textm])
         p[0] = [textm for textm in text if textm]
 
+
     def p_corps(self, p):
         """corps : PLAIN_STR
                  | COMMAND"""
         p[0] = self.check_command(p[1])
+
+    def p_array(self, p):
+        """array : lbrace argument_list rbrace
+
+           array : lbrace argument_list
+           array : lbrace"""
+        if len(p) == 4:
+            p[0] = [p[1], *p[2], p[3]]
+        elif len(p) == 3:
+            p[0] = [p[1], *p[2], ("text", "]")]
+        else:
+            p[0] = [p[1], ("text", "]")]
+
+    def p_lbrace(self, p):
+        """lbrace : LBRACE"""
+        p[0] = ("text", p[1])
+
+    def p_rbrace(self, p):
+        """rbrace : RBRACE"""
+        p[0] = ("text", p[1])
 
     def p_lparen(self, p):
         """lparen : LPAREN"""

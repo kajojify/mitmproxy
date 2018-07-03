@@ -5,6 +5,7 @@ from mitmproxy.net import tls
 
 
 CONF_DIR = "~/.mitmproxy"
+COMMAND_HISTORY_SIZE = 10
 LISTEN_PORT = 8080
 
 
@@ -13,12 +14,12 @@ class Options(optmanager.OptManager):
     def __init__(self, **kwargs) -> None:
         super().__init__()
         self.add_option(
-            "server", bool, True,
-            "Start a proxy server. Enabled by default."
-        )
-        self.add_option(
             "showhost", bool, False,
             "Use the Host header to construct URLs for display."
+        )
+        self.add_option(
+            "server", bool, True,
+            "Start a proxy server. Enabled by default."
         )
 
         # Proxy options

@@ -76,6 +76,14 @@ class CommandBuffer:
             to the cursor. Beyond that, we can add stuff.
         """
         typer = self.master.commands.parse_partial(self.text)
+
+        txt = ""
+        print(typer)
+        for t in typer:
+            if t[0] != "commander_hint":
+                txt += t[1]
+        self.text = txt
+        # print(self.text)
         # txt = ""
         # for t in typer:
         #     if t[0] != "commander_hint":

@@ -160,10 +160,17 @@ class CommandManager(mitmproxy.types._CommandBase):
         lxr = lexer.create_lexer(cmdstr, self.oneword_commands)
         lxr.begin("interactive")
         # print(list(lxr))
+        # lxr.lexpos = 0
+        # import time
+        # time.sleep(3)
+        # print(list(lxr))
         # import time
         # time.sleep(10)
         parser = interactive_parser.create_partial_parser(self.commands)
-        typer = parser.parse(lxr)
+        try:
+            typer = parser.parse(lxr)
+        except Exception:
+            typer = [("commander_invalid", cmdstr)]
         return typer
         # parse: typing.List[ParseResult] = []
         # params: typing.List[type] = []
