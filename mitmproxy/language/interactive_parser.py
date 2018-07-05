@@ -105,31 +105,21 @@ class InteractivePartialParser:
         p[0] = self.check_command(p[1])
 
     def p_array(self, p):
-        """array : lbrace argument_list rbrace
-
+        """array : lbrace
            array : lbrace argument_list
-           array : lbrace"""
+           array : lbrace argument_list rbrace"""
         if len(p) == 4:
             p[0] = [p[1], *p[2], p[3]]
         elif len(p) == 3:
-            p[0] = [p[1], *p[2], ("text", "]")]
+            p[0] = [p[1], *p[2]]
         else:
             p[0] = [p[1], ("text", "]")]
 
     def p_lbrace(self, p):
-        """lbrace : LBRACE"""
-        p[0] = ("text", p[1])
-
-    def p_rbrace(self, p):
-        """rbrace : RBRACE"""
-        p[0] = ("text", p[1])
-
-    def p_lparen(self, p):
-        """lparen : LPAREN"""
-        p[0] = ("text", p[1])
-
-    def p_paren(self, p):
-        """rparen : RPAREN"""
+        """lbrace : LBRACE
+           rbrace : RBRACE
+           lparen : LPAREN
+           rparen : RPAREN"""
         p[0] = ("text", p[1])
 
     def p_eorws(self, p):

@@ -78,7 +78,6 @@ class CommandBuffer:
         typer = self.master.commands.parse_partial(self.text)
 
         txt = ""
-        print(typer)
         for t in typer:
             if t[0] != "commander_hint":
                 txt += t[1]
