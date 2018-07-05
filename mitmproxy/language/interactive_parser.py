@@ -19,7 +19,7 @@ class InteractivePartialParser:
 
     def p_command_call(self, p):
         """command_line : empty
-                        | array
+                        | argument_list
                         | command_call_no_parentheses
                         | command_call_with_parentheses"""
         if p[1]:
@@ -109,18 +109,22 @@ class InteractivePartialParser:
            array : lbrace argument_list
            array : lbrace argument_list rbrace"""
         if len(p) == 4:
-            p[0] = [p[1], *p[2], p[3]]
+            p[0] = [*p[1], *p[2], *p[3]]
         elif len(p) == 3:
-            p[0] = [p[1], *p[2]]
+            p[0] = [*p[1], *p[2]]
         else:
-            p[0] = [p[1], ("text", "]")]
+            p[0] = [*p[1]]
 
     def p_lbrace(self, p):
         """lbrace : LBRACE
            rbrace : RBRACE
            lparen : LPAREN
            rparen : RPAREN"""
-        p[0] = ("text", p[1])
+        mao = {"(": ")", "[": "]"}
+        if self.autoclosing:
+            p[0] = [("text", p[1]), ("text", mao[p[1]])]
+        else:
+            p[0] = [("text", p[1])]
 
     def p_eorws(self, p):
         """eorws : empty

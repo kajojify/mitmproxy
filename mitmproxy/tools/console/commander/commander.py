@@ -52,6 +52,7 @@ class CommandBuffer:
         self.master = master
         self.text = start
         # Cursor is always within the range [0:len(buffer)].
+        self.autoclosing = True
         self._cursor = len(self.text)
         self.completion: CompletionState = None
 
@@ -75,7 +76,7 @@ class CommandBuffer:
             character-for-character offset match in the rendered output, up
             to the cursor. Beyond that, we can add stuff.
         """
-        typer = self.master.commands.parse_partial(self.text)
+        typer = self.master.commands.parse_partial(self.text, self.autoclosing)
 
         txt = ""
         for t in typer:
@@ -140,7 +141,18 @@ class CommandBuffer:
     def backspace(self) -> None:
         if self.cursor == 0:
             return
-        self.text = self.text[:self.cursor - 1] + self.text[self.cursor:]
+        brackets = ("''", '""', "()", "[]")
+        possible_brackets_pair = self.text[self.cursor - 1:self.cursor + 1]
+        if possible_brackets_pair in brackets:
+            self.text = self.text[:self.cursor - 1] + self.text[self.cursor + 1:]
+        elif self.text[self.cursor - 1] == "]":
+            self.autoclosing = False
+            self.text = self.text[:self.cursor - 1] + self.text[self.cursor:]
+        elif self.text[self.cursor - 1] == "[":
+            self.autoclosing = True
+            self.text = self.text[:self.cursor - 1] + self.text[self.cursor:]
+        else:
+            self.text = self.text[:self.cursor - 1] + self.text[self.cursor:]
         self.cursor = self.cursor - 1
         self.completion = None
 
@@ -148,6 +160,8 @@ class CommandBuffer:
         """
             Inserts text at the cursor.
         """
+        if k == "[":
+            self.autoclosing = True
         self.text = self.text[:self.cursor] + k + self.text[self.cursor:]
         self.cursor += 1
         self.completion = None
