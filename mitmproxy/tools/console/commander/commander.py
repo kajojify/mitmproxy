@@ -76,13 +76,9 @@ class CommandBuffer:
             character-for-character offset match in the rendered output, up
             to the cursor. Beyond that, we can add stuff.
         """
-        typer = self.master.commands.parse_partial(self.text, self.autoclosing)
+        typer = self.master.commands.parse_partial(self.text)
+        print(typer)
 
-        txt = ""
-        for t in typer:
-            if t[0] != "commander_hint":
-                txt += t[1]
-        self.text = txt
         # print(self.text)
         # txt = ""
         # for t in typer:
@@ -111,7 +107,7 @@ class CommandBuffer:
         # if remhelp:
         #     for v in remhelp:
         #         ret.append(("commander_hint", "%s " % v))
-        return typer
+        return ("text", self.text)
 
     def left(self) -> None:
         self.cursor = self.cursor - 1

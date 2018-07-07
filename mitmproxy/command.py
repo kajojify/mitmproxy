@@ -147,8 +147,7 @@ class CommandManager(mitmproxy.types._CommandBase):
 
     def parse_partial(
         self,
-        cmdstr: str,
-        autoclosing
+        cmdstr: str
     ) -> typing.Tuple[typing.Sequence[ParseResult], typing.Sequence[str]]:
         """
             Parse a possibly partial command. Return a sequence of ParseResults and a sequence of remainder type help items.
@@ -168,7 +167,6 @@ class CommandManager(mitmproxy.types._CommandBase):
         # import time
         # time.sleep(10)
         parser = interactive_parser.create_partial_parser(self.commands)
-        parser.autoclosing = autoclosing
         try:
             typer = parser.parse(lxr)
         except Exception:
