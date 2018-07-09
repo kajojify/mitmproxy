@@ -78,11 +78,12 @@ class CommandBuffer:
         """
         typer = self.master.commands.parse_partial(self.text)
         if not isinstance(typer, list):
-            print("Typer says: ", typer.generate_markup())
             markup = typer.generate_markup()
         else:
-            print("Typer says: ", typer)
             markup = typer
+        if not markup:
+            markup = [("text", "")]
+        print("Typer says: ", markup)
         return markup
 
     def left(self) -> None:

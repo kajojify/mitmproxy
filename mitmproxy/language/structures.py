@@ -14,12 +14,12 @@ class CommandLine:
         for element in self.line:
             if element:
                 if isinstance(element, Array) or isinstance(element, CommandSpace):
-                    markup.extend(self.collect_markups(element))
+                    markup.extend(self._collect_markups(element))
                 else:
                     markup.append(("text", element))
         return markup
 
-    def collect_markups(self, space):
+    def _collect_markups(self, space):
         if isinstance(space, CommandSpace):
             markup = [(space.markup_attr, space.name)]
             remhelp = space.get_remhelp()
@@ -29,18 +29,21 @@ class CommandLine:
         for arg in arguments:
             if arg:
                 if isinstance(arg, Array) or isinstance(arg, CommandSpace):
-                    markup.extend(self.collect_markups(arg))
+                    markup.extend(self._collect_markups(arg))
                 else:
-                    markup += [arg]
+                    markup += [("text", arg)]
         markup += remhelp
         return markup
 
 
 class CommandSpace:
-    def __init__(self, command_name, arguments, manager):
+    def __init__(self, command_name, manager, head,
+                 arguments, tail, autoclosing=False):
         self.name = command_name
         self.manager = manager
         self.arguments = arguments
+        self.type = mitmproxy.types.Cmd
+
         markup_attrs = ("commander_invalid", "commander_command")
         valid = self.is_valid(mitmproxy.types.Cmd, self.name)
         self.markup_attr = markup_attrs[valid]

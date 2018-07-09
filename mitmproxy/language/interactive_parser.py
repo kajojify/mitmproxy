@@ -19,7 +19,11 @@ class InteractivePartialParser:
     def p_command_call(self, p):
         """command_line : empty
                         | eorws expression eorws optional_pipes eorws"""
-        self.parsed_line = structures.CommandLine(p[1:])
+        if len(p) == 2:
+            space = p[1:]
+        else:
+            space = [*p[1:4], *p[4], p[5]]
+        self.parsed_line = structures.CommandLine(space)
 
     def p_expression(self, p):
         """expression : array
@@ -35,7 +39,7 @@ class InteractivePartialParser:
     def p_pipe_expression(self, p):
         """pipe_expression : empty
                            | PIPE eorws
-                           | PIPE eorws command_call"""
+                           | PIPE eorws command_call eorws"""
         p[0] = [p[1]] if p[1] else []
         if len(p) > 2:
             p[0].extend(p[2:])
@@ -47,13 +51,23 @@ class InteractivePartialParser:
 
     def p_command_call_with_parentheses(self, p):
         """command_call_with_parentheses : command_name eorws LPAREN eorws
+           command_call_with_parentheses : command_name eorws LPAREN eorws RBRACE
            command_call_with_parentheses : command_name eorws LPAREN eorws argument_list eorws
            command_call_with_parentheses : command_name eorws LPAREN eorws argument_list eorws RPAREN"""
-        p[0] = structures.CommandSpace(p[1], p[2:], self.manager)
+        if len(p) == 5:
+            space = {"head": p[2:], "autoclosing": True}
+        elif len(p) == 6:
+            space = {"head": p[2:]}
+        elif len(p) == 7:
+            space = {"head": p[2:5], "arguments": p[5], "tail": p[6:7]}
+        else:
+            space = {"head": p[2:5], "arguments": p[5], "tail": p[6:8]}
+        p[0] = structures.CommandSpace(p[1], self.manager, **space)
 
     def p_command_call_no_parentheses(self, p):
         """command_call_no_parentheses : command_name eorws argument_list"""
-        p[0] = structures.CommandSpace(p[1], p[2:], self.manager)
+        args = {"head": p[2:3], "arguments": p[3]}
+        p[0] = structures.CommandSpace(p[1], self.manager, **args)
 
     def p_array(self, p):
         """array : LBRACE eorws
@@ -75,8 +89,7 @@ class InteractivePartialParser:
             p[0] = [] if p[1] is None else [p[1]]
         else:
             p[0] = p[1]
-            p[0].append(p[2])
-            p[0].append(p[3])
+            p[0].extend([p[2], p[3]])
 
     def p_argument(self, p):
         """argument : PLAIN_STR
