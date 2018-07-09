@@ -12,6 +12,7 @@ class CommandLanguageLexer:
         "RPAREN",
         "LBRACE",
         "RBRACE",
+        "PIPE",
         "QUOTED_STR"
     )
     states = (
@@ -27,6 +28,7 @@ class CommandLanguageLexer:
     t_RPAREN = r"\)"
     t_LBRACE = r"\["
     t_RBRACE = r"\]"
+    t_PIPE = r"\|"
 
     def t_COMMAND(self, t):
         r"""\w+(\.\w+)+"""
@@ -40,7 +42,7 @@ class CommandLanguageLexer:
         return t
 
     def t_PLAIN_STR(self, t):
-        r"""[^\[\]\(\)\s]+"""
+        r"""[^\|\[\]\(\)\s]+"""
         t.type = self.oneword_commands.get(t.value, "PLAIN_STR")
         return t
 

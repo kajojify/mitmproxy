@@ -77,37 +77,13 @@ class CommandBuffer:
             to the cursor. Beyond that, we can add stuff.
         """
         typer = self.master.commands.parse_partial(self.text)
-        print(typer)
-
-        # print(self.text)
-        # txt = ""
-        # for t in typer:
-        #     if t[0] != "commander_hint":
-        #         txt += t[1]
-        #     else:
-        #         txt += " "*len(t[1])
-        # self.text = txt
-        # ret = []
-        #
-        # for p in parts:
-        #     if p.valid:
-        #         if p.type == mitmproxy.types.Cmd:
-        #             ret.append(("commander_command", p.value))
-        #         else:
-        #             ret.append(("text", p.value))
-        #     elif p.value:
-        #         if p.value.isspace():
-        #             ret.append(("text", p.value))
-        #         else:
-        #             ret.append(("commander_invalid", p.value))
-        #     else:
-        #         ret.append(("text", ""))
-        # ret.append(("text", " "))
-        #
-        # if remhelp:
-        #     for v in remhelp:
-        #         ret.append(("commander_hint", "%s " % v))
-        return ("text", self.text)
+        if not isinstance(typer, list):
+            print("Typer says: ", typer.generate_markup())
+            markup = typer.generate_markup()
+        else:
+            print("Typer says: ", typer)
+            markup = typer
+        return markup
 
     def left(self) -> None:
         self.cursor = self.cursor - 1

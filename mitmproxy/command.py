@@ -152,66 +152,15 @@ class CommandManager(mitmproxy.types._CommandBase):
         """
             Parse a possibly partial command. Return a sequence of ParseResults and a sequence of remainder type help items.
         """
-        # parts: typing.List[lexer.lex.LexToken] = lexer.get_tokens(cmdstr)
-        # if not parts:
-        #     parts = [""]
-        # elif parts[-1].type == "WHITESPACE":
-        #     parts.append("")
         lxr = lexer.create_lexer(cmdstr, self.oneword_commands)
         lxr.begin("interactive")
-        # print(list(lxr))
-        # lxr.lexpos = 0
-        # import time
-        # time.sleep(3)
-        # print(list(lxr))
-        # import time
-        # time.sleep(10)
-        parser = interactive_parser.create_partial_parser(self.commands)
+
+        parser = interactive_parser.create_partial_parser(manager=self)
         try:
             typer = parser.parse(lxr)
-        except Exception:
+        except exceptions.CommandError:
             typer = [("commander_invalid", cmdstr)]
         return typer
-        # parse: typing.List[ParseResult] = []
-        # params: typing.List[type] = []
-        # typ: typing.Type = None
-        # for i, part in enumerate(parts):
-        #     typ = mitmproxy.types.Unknown
-        #     if not part.isspace():
-        #         if i == 0 or (i == 1 and parts[i - 1].isspace()):
-        #             typ = mitmproxy.types.Cmd
-        #             if part in self.commands:
-        #                 params.extend(self.commands[part].paramtypes)
-        #         elif params:
-        #             typ = params.pop(0)
-        #             if typ == mitmproxy.types.Cmd and params and params[0] == mitmproxy.types.Arg:
-        #                 if part in self.commands:
-        #                     params[:] = self.commands[part].paramtypes
-        #
-        #     to = mitmproxy.types.CommandTypes.get(typ, None)
-        #     valid = False
-        #     if to:
-        #         try:
-        #             to.parse(self, typ, part)
-        #         except exceptions.TypeError:
-        #             valid = False
-        #         else:
-        #             valid = True
-        #
-        #     parse.append(
-        #         ParseResult(
-        #             value=part,
-        #             type=typ,
-        #             valid=valid,
-        #         )
-        #     )
-        # return None, None
-        # remhelp: typing.List[str] = []
-        # for x in params:
-        #     remt = mitmproxy.types.CommandTypes.get(x, None)
-        #     remhelp.append(remt.display)
-        #
-        # return parse, remhelp
 
     def call(self, path: str, *args: typing.Sequence[typing.Any]) -> typing.Any:
         """
