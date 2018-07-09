@@ -66,3 +66,13 @@ def get_tokens(cmdstr: str, state="interactive") -> typing.List[lex.LexToken]:
     # Switching to the other state
     lexer.begin(state)
     return list(lexer)
+
+
+class InteractiveLexer:
+    def __init__(self, cmdstr: str, state="interactive"):
+        self.tokens = get_tokens(cmdstr, state)
+
+
+
+    def token(self):
+        token = self.lexer.token()
