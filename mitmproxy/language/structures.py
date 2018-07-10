@@ -10,7 +10,7 @@ class CommandLine:
 
     def generate_markup(self):
         markup = []
-        # print("Line: ", self.line)
+        print("Line: ", self.line)
         for element in self.line:
             if element:
                 if isinstance(element, Array) or isinstance(element, CommandSpace):

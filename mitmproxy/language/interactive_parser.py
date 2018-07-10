@@ -51,7 +51,7 @@ class InteractivePartialParser:
 
     def p_command_call_with_parentheses(self, p):
         """command_call_with_parentheses : command_name eorws LPAREN eorws
-           command_call_with_parentheses : command_name eorws LPAREN eorws RBRACE
+           command_call_with_parentheses : command_name eorws LPAREN eorws RPAREN
            command_call_with_parentheses : command_name eorws LPAREN eorws argument_list eorws
            command_call_with_parentheses : command_name eorws LPAREN eorws argument_list eorws RPAREN"""
         if len(p) == 5:
@@ -79,6 +79,7 @@ class InteractivePartialParser:
         elif len(p) == 4:
             p[0] = structures.Array(space=p[1:])
         else:
+            print("ArgumentList", p[3])
             p[0] = structures.Array(space=[*p[1:3], *p[3], *p[4:]])
 
     def p_argument_list(self, p):

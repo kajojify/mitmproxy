@@ -83,7 +83,7 @@ class CommandBuffer:
             markup = typer
         if not markup:
             markup = [("text", "")]
-        # print("Typer says: ", markup)
+        print("Typer says: ", markup)
         return markup
 
     def left(self) -> None:
