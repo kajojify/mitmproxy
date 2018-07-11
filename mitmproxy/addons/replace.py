@@ -69,8 +69,8 @@ class Replace:
             lst = []
             for rep in ctx.options.replacements:
                 fpatt, rex, s = parse_hook(rep)
-
                 flt = flowfilter.parse(fpatt)
+                print(flt)
                 if not flt:
                     raise exceptions.OptionsError(
                         "Invalid filter pattern: %s" % fpatt

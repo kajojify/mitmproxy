@@ -18,11 +18,11 @@ class InteractivePartialParser:
 
     def p_command_call(self, p):
         """command_line : empty
-                        | eorws expression eorws optional_pipes eorws"""
+                        | expression optional_pipes"""
         if len(p) == 2:
             space = p[1:]
         else:
-            space = [*p[1:4], *p[4], p[5]]
+            space = [p[1], *p[2]]
         self.parsed_line = structures.CommandLine(space)
 
     def p_expression(self, p):
@@ -38,11 +38,11 @@ class InteractivePartialParser:
 
     def p_pipe_expression(self, p):
         """pipe_expression : empty
-                           | PIPE eorws
-                           | PIPE eorws command_call eorws"""
+                           | PIPE
+                           | PIPE command_call"""
         p[0] = [p[1]] if p[1] else []
         if len(p) > 2:
-            p[0].extend(p[2:])
+            p[0].append(p[2])
 
     def p_command_calll(self, p):
         """command_call : command_call_no_parentheses
@@ -50,50 +50,52 @@ class InteractivePartialParser:
         p[0] = p[1]
 
     def p_command_call_with_parentheses(self, p):
-        """command_call_with_parentheses : command_name eorws LPAREN eorws
-           command_call_with_parentheses : command_name eorws LPAREN eorws RPAREN
-           command_call_with_parentheses : command_name eorws LPAREN eorws argument_list eorws
-           command_call_with_parentheses : command_name eorws LPAREN eorws argument_list eorws RPAREN"""
-        if len(p) == 5:
-            space = {"head": p[2:], "autoclosing": True}
-        elif len(p) == 6:
-            space = {"head": p[2:]}
-        elif len(p) == 7:
-            space = {"head": p[2:5], "arguments": p[5], "tail": p[6:7]}
-        else:
-            space = {"head": p[2:5], "arguments": p[5], "tail": p[6:8]}
+        """command_call_with_parentheses : command_name LPAREN
+           command_call_with_parentheses : command_name LPAREN argument_list
+           command_call_with_parentheses : command_name LPAREN argument_list RPAREN"""
+        if len(p) == 3:
+            space = {"autoclosing": True}
+        elif len(p) == 4:
+            space = {"head": p[2:3], "arguments": p[3]}
+        elif len(p) == 5:
+            space = {"head": p[2:3], "arguments": p[3], "tail": p[4:5]}
+        p[0] = structures.CommandSpace(p[1], self.manager, **space)
+
+    def p_c(self, p):
+        """command_call_with_parentheses : command_name LPAREN RPAREN"""
+        space = {"head": p[2:]}
         p[0] = structures.CommandSpace(p[1], self.manager, **space)
 
     def p_command_call_no_parentheses(self, p):
-        """command_call_no_parentheses : command_name eorws argument_list"""
-        args = {"head": p[2:3], "arguments": p[3]}
+        """command_call_no_parentheses : command_name argument_list"""
+        args = {"arguments": p[2]}
         p[0] = structures.CommandSpace(p[1], self.manager, **args)
 
     def p_array(self, p):
-        """array : LBRACE eorws
-           array : LBRACE eorws RBRACE
-           array : LBRACE eorws argument_list eorws
-           array : LBRACE eorws argument_list eorws RBRACE"""
-        if len(p) == 3:
+        """array : LBRACE
+           array : LBRACE RBRACE
+           array : LBRACE argument_list
+           array : LBRACE argument_list RBRACE"""
+        if len(p) == 2:
             p[0] = structures.Array(space=p[1:], autoclosing=True)
-        elif len(p) == 4:
+        elif len(p) == 3:
             p[0] = structures.Array(space=p[1:])
         else:
-            print("ArgumentList", p[3])
-            p[0] = structures.Array(space=[*p[1:3], *p[3], *p[4:]])
+            p[0] = structures.Array(space=[p[1], *p[2], p[3]])
 
     def p_argument_list(self, p):
         """argument_list : empty
                          | argument
-                         | argument_list eorws argument"""
+                         | argument_list argument"""
         if len(p) == 2:
             p[0] = [] if p[1] is None else [p[1]]
         else:
             p[0] = p[1]
-            p[0].extend([p[2], p[3]])
+            p[0].append(p[2])
 
     def p_argument(self, p):
-        """argument : PLAIN_STR
+        """argument : DUMMY
+                    | PLAIN_STR
                     | QUOTED_STR
                     | COMMAND
                     | array
@@ -101,13 +103,9 @@ class InteractivePartialParser:
         p[0] = p[1]
 
     def p_command_name(self, p):
-        """command_name : PLAIN_STR
+        """command_name : DUMMY
+                        | PLAIN_STR
                         | COMMAND"""
-        p[0] = p[1]
-
-    def p_eorws(self, p):
-        """eorws : empty
-                 | WHITESPACE"""
         p[0] = p[1]
 
     def p_empty(self, p):

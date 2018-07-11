@@ -119,6 +119,7 @@ class CommandManager(mitmproxy.types._CommandBase):
     def __init__(self, master):
         self.master = master
         self.command_parser = parser.create_parser(self)
+        self.partial_parser = interactive_parser.create_partial_parser(manager=self)
         self.commands: typing.Dict[str, Command] = {}
         self.oneword_commands: typing.List[str] = []
 
@@ -152,15 +153,14 @@ class CommandManager(mitmproxy.types._CommandBase):
         """
             Parse a possibly partial command. Return a sequence of ParseResults and a sequence of remainder type help items.
         """
-        lxr = lexer.create_lexer(cmdstr, self.oneword_commands)
-        lxr.begin("interactive")
-
-        parser = interactive_parser.create_partial_parser(manager=self)
+        lxr = lexer.InteractiveLexer(cmdstr, self.oneword_commands)
+        print("Lex: ", lxr.tokens)
         try:
-            typer = parser.parse(lxr)
+            typer = self.partial_parser.parse(lxr)
         except exceptions.CommandError:
             typer = [("commander_invalid", cmdstr)]
-        return typer
+            lxr.whitespace_map = []
+        return typer, lxr.whitespace_map
 
     def call(self, path: str, *args: typing.Sequence[typing.Any]) -> typing.Any:
         """

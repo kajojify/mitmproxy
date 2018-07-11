@@ -76,15 +76,37 @@ class CommandBuffer:
             character-for-character offset match in the rendered output, up
             to the cursor. Beyond that, we can add stuff.
         """
-        typer = self.master.commands.parse_partial(self.text)
+        typer, wm = self.master.commands.parse_partial(self.text)
+        print("WS MAP: ", wm)
         if not isinstance(typer, list):
             markup = typer.generate_markup()
         else:
             markup = typer
         if not markup:
             markup = [("text", "")]
-        print("Typer says: ", markup)
-        return markup
+        typer = markup[::-1]
+        print("typer: ", typer)
+        reunited_typer = []
+        for m in wm:
+            if m is None:
+                try:
+                    while True:
+                        mark = typer.pop()
+                        print("Mark", mark)
+                        if mark[0].startswith("m_"):
+                            mark = (mark[0][2:], mark[1])
+
+                            reunited_typer.append(mark)
+                        else:
+                            reunited_typer.append(mark)
+                            break
+                except Exception:
+                    continue
+            else:
+                reunited_typer.append(("text", m))
+        m = reunited_typer + typer[::-1]
+        print("Reunited typer: ", m)
+        return m
 
     def left(self) -> None:
         self.cursor = self.cursor - 1
