@@ -34,8 +34,7 @@ class CommandLine:
                     markup.extend(self._collect_markups(arg))
                 elif isinstance(arg, Arg):
                     display_attr = ("commander_invalid", "text")[arg.valid]
-                    if arg.value:
-                        markup.append((display_attr, arg.value))
+                    markup.append((display_attr, arg.value))
                 else:
                     markup.append(("text", arg ))
         if remhelp:
