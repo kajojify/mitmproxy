@@ -10,7 +10,7 @@ class CommandLine:
 
     def generate_markup(self):
         markup = []
-        print("Line: ", self.line)
+        # print("Line: ", self.line)
         for element in self.line:
             if element:
                 if isinstance(element, Array) or isinstance(element, CommandSpace):
@@ -26,22 +26,20 @@ class CommandLine:
         else:
             markup, remhelp = [], []
         arguments = space.head + space.arguments
-        print("Args: ", space.arguments)
-        print("Rem: ", remhelp)
+        # print("Args: ", space.arguments)
+        # print("Rem: ", remhelp)
         for arg in arguments:
             if arg is not None:
                 if isinstance(arg, Array) or isinstance(arg, CommandSpace):
                     markup.extend(self._collect_markups(arg))
                 elif isinstance(arg, Arg):
                     display_attr = ("commander_invalid", "text")[arg.valid]
-                    markup.append((display_attr, arg.value))
+                    if arg.value:
+                        markup.append((display_attr, arg.value))
                 else:
-                    if isinstance(arg, tuple):
-                        markup.append(("m_text", arg[0]))
-                    else:
-                        markup.append(("text", arg))
+                    markup.append(("text", arg ))
         if remhelp:
-            markup += [("m_text", " ")]
+            markup += [("text", " ")]
         markup += remhelp
         markup += space.tail
         return markup
@@ -84,7 +82,7 @@ class CommandSpace:
         remhelp: typing.List[str] = []
         for x in self.params:
             remt = mitmproxy.types.CommandTypes.get(x, None)
-            remhelp.append(("commander_hint", " %s" % remt.display))
+            remhelp.append(("commander_hint", "  %s" % remt.display))
         return remhelp
 
     def is_valid(self, typ, value):

@@ -85,28 +85,17 @@ class CommandBuffer:
         if not markup:
             markup = [("text", "")]
         typer = markup[::-1]
-        print("typer: ", typer)
+        print("markup: ", markup)
         reunited_typer = []
         for m in wm:
-            if m is None:
-                try:
-                    while True:
-                        mark = typer.pop()
-                        print("Mark", mark)
-                        if mark[0].startswith("m_"):
-                            mark = (mark[0][2:], mark[1])
-
-                            reunited_typer.append(mark)
-                        else:
-                            reunited_typer.append(mark)
-                            break
-                except Exception:
-                    continue
+            if m is None and typer:
+                attr, elem = typer.pop()
+                reunited_typer.append((attr, elem))
             else:
                 reunited_typer.append(("text", m))
-        m = reunited_typer + typer[::-1]
-        print("Reunited typer: ", m)
-        return m
+        reunited = reunited_typer + typer[::-1]
+        print("Reunited typer: ", reunited)
+        return [("text", self.text)]
 
     def left(self) -> None:
         self.cursor = self.cursor - 1
