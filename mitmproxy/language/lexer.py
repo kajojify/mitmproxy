@@ -91,7 +91,6 @@ class InteractiveLexer:
         self.tokens_iter = iter(tokens)
         self.whitespace_map = []
 
-
     def token(self):
         try:
             current_token = next(self.tokens_iter)

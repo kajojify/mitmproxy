@@ -76,26 +76,50 @@ class CommandBuffer:
             character-for-character offset match in the rendered output, up
             to the cursor. Beyond that, we can add stuff.
         """
+        import time
         typer, wm = self.master.commands.parse_partial(self.text)
         print("WS MAP: ", wm)
         if not isinstance(typer, list):
             markup = typer.generate_markup()
         else:
             markup = typer
-        if not markup:
-            markup = [("text", "")]
-        typer = markup[::-1]
-        print("markup: ", markup)
-        reunited_typer = []
-        for m in wm:
-            if m is None and typer:
-                attr, elem = typer.pop()
-                reunited_typer.append((attr, elem))
+            print("markup: ", markup)
+
+            return markup
+        u = self.restore_whitespaces(wm, markup)
+        txt = self.get_new_text(markup)
+        print("markup: ", u)
+        print("text: ", txt)
+        self.text = txt
+
+        return u  # [("text", self.text)]
+
+    def restore_whitespaces(self, wsmap, markup):
+        mp_ind = 0
+        united = []
+        for p in wsmap:
+            if p is None:
+                if markup[mp_ind] is not None:
+                    united.append(markup[mp_ind])
+                    mp_ind += 1
             else:
-                reunited_typer.append(("text", m))
-        reunited = reunited_typer + typer[::-1]
-        print("Reunited typer: ", reunited)
-        return [("text", self.text)]
+                united.append(("text", p))
+        remain = []
+        for m in markup[mp_ind + 1:]:
+            if m[0] is not None:
+                remain.append(m)
+        united = united + remain
+        return united if united else [("text", "")]
+
+    def get_new_text(self, united):
+        txt = ""
+        for u in united:
+            print(u)
+            import time
+            time.sleep(1)
+            if u[0] is None or (not u[0].startswith("m_") and u[0] != "commander_hint"):
+                txt += u[1]
+        return txt
 
     def left(self) -> None:
         self.cursor = self.cursor - 1

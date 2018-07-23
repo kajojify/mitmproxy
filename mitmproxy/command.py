@@ -154,7 +154,7 @@ class CommandManager(mitmproxy.types._CommandBase):
             Parse a possibly partial command. Return a sequence of ParseResults and a sequence of remainder type help items.
         """
         lxr = lexer.InteractiveLexer(cmdstr, self.oneword_commands)
-        print("Lex: ", lxr.tokens)
+        print("\nLex: ", lxr.tokens)
         try:
             typer = self.partial_parser.parse(lxr)
         except exceptions.CommandError:

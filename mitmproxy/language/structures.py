@@ -25,8 +25,11 @@ class CommandLine:
             remhelp = space.get_remhelp()
         else:
             markup, remhelp = [], []
-        arguments = space.head + space.arguments
-        # print("Args: ", space.arguments)
+        for a in space.head:
+            markup.append(("text", a))
+
+        arguments = space.arguments
+        print("Args: ", space.arguments)
         # print("Rem: ", remhelp)
         for arg in arguments:
             if arg is not None:
@@ -34,13 +37,15 @@ class CommandLine:
                     markup.extend(self._collect_markups(arg))
                 elif isinstance(arg, Arg):
                     display_attr = ("commander_invalid", "text")[arg.valid]
+                    if arg.value == "":
+                        display_attr = "text"
                     markup.append((display_attr, arg.value))
                 else:
                     markup.append(("text", arg ))
         if remhelp:
-            markup += [("text", " ")]
+            markup += [("text", " "), ("text", " ")]
         markup += remhelp
-        markup += space.tail
+        markup += [("text", t) if not isinstance(t, tuple) else t for t in space.tail]
         return markup
 
     def get_last(self):
@@ -66,12 +71,16 @@ class CommandSpace:
                     typ = self.params.pop(0)
                 except IndexError:
                     self.arguments.append(Arg(arg, None, False))
-                valid = self.is_valid(typ, arg)
-                self.arguments.append(Arg(arg, typ, valid))
+                else:
+                    valid = self.is_valid(typ, arg)
+                    self.arguments.append(Arg(arg, typ, valid))
 
         self.tail = [t for t in tail if t] if tail else []
         if autoclosing:
-            self.tail.append((")",))
+            if not self.get_remhelp():
+                self.tail.append((None, ")"))
+            else:
+                self.tail.append(("m_text", ")"))
 
         markup_attrs = ("commander_invalid", "commander_command")
         self.markup_attr = markup_attrs[validC]
@@ -81,7 +90,7 @@ class CommandSpace:
         remhelp: typing.List[str] = []
         for x in self.params:
             remt = mitmproxy.types.CommandTypes.get(x, None)
-            remhelp.append(("commander_hint", "  %s" % remt.display))
+            remhelp.append(("commander_hint", "%s " % remt.display))
         return remhelp
 
     def is_valid(self, typ, value):

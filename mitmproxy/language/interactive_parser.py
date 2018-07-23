@@ -54,9 +54,9 @@ class InteractivePartialParser:
            command_call_with_parentheses : command_name LPAREN argument_list
            command_call_with_parentheses : command_name LPAREN argument_list RPAREN"""
         if len(p) == 3:
-            space = {"autoclosing": True}
+            space = {"head": p[2:3], "autoclosing": True}
         elif len(p) == 4:
-            space = {"head": p[2:3], "arguments": p[3]}
+            space = {"head": p[2:3], "arguments": p[3], "autoclosing": True}
         elif len(p) == 5:
             space = {"head": p[2:3], "arguments": p[3], "tail": p[4:5]}
         p[0] = structures.CommandSpace(p[1], self.manager, **space)

@@ -15,7 +15,7 @@ class Palette:
         'heading', 'heading_key', 'heading_inactive',
 
         # Help
-        'key', 'head', 'text',
+        'key', 'head', 'text', 'm_text',
 
         # Options
         'option_selected', 'option_active', 'option_active_selected',
@@ -86,6 +86,7 @@ class LowDark(Palette):
         key = ('light cyan', 'default'),
         head = ('white,bold', 'default'),
         text = ('light gray', 'default'),
+        m_text = ('light gray', 'default'),
 
         # Options
         option_selected = ('black', 'light gray'),
@@ -158,6 +159,7 @@ class LowLight(Palette):
         key = ('dark blue', 'default'),
         head = ('black', 'default'),
         text = ('dark gray', 'default'),
+        m_text = ('dark gray', 'default'),
 
         # Options
         option_selected = ('black', 'light gray'),
@@ -239,6 +241,7 @@ class SolarizedLight(LowLight):
         background = (sol_base00, sol_base3),
         title = (sol_cyan, 'default'),
         text = (sol_base00, 'default'),
+        m_text=(sol_base00, 'default'),
 
         # Status bar & heading
         heading = (sol_base2, sol_base02),
@@ -294,6 +297,7 @@ class SolarizedDark(LowDark):
         background = (sol_base2, sol_base03),
         title = (sol_blue, 'default'),
         text = (sol_base1, 'default'),
+        m_text = (sol_base1, 'default'),
 
         # Status bar & heading
         heading = (sol_base2, sol_base01),
