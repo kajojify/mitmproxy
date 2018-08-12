@@ -10,7 +10,6 @@ class CommandLine:
 
     def generate_markup(self):
         markup = []
-        # print("Line: ", self.line)
         for element in self.line:
             if element:
                 if isinstance(element, Array) or isinstance(element, CommandSpace):
@@ -29,8 +28,6 @@ class CommandLine:
             markup.append(("text", a))
 
         arguments = space.arguments
-        print("Args: ", space.arguments)
-        # print("Rem: ", remhelp)
         for arg in arguments:
             if arg is not None:
                 if isinstance(arg, Array) or isinstance(arg, CommandSpace):

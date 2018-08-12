@@ -4,7 +4,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 from mitmproxy import exceptions
-from mitmproxy.language import structures
+from mitmproxy.language import markup_structures as ms
 from mitmproxy.language.lexer import CommandLanguageLexer
 
 
@@ -23,7 +23,7 @@ class InteractivePartialParser:
             space = p[1:]
         else:
             space = [p[1], *p[2]]
-        self.parsed_line = structures.CommandLine(space)
+        self.parsed_line = ms.CommandLine(space)
 
     def p_expression(self, p):
         """expression : array
@@ -59,17 +59,17 @@ class InteractivePartialParser:
             space = {"head": p[2:3], "arguments": p[3], "autoclosing": True}
         elif len(p) == 5:
             space = {"head": p[2:3], "arguments": p[3], "tail": p[4:5]}
-        p[0] = structures.CommandSpace(p[1], self.manager, **space)
+        p[0] = ms.CommandSpace(p[1], self.manager, **space)
 
     def p_c(self, p):
         """command_call_with_parentheses : command_name LPAREN RPAREN"""
         space = {"head": p[2:]}
-        p[0] = structures.CommandSpace(p[1], self.manager, **space)
+        p[0] = ms.CommandSpace(p[1], self.manager, **space)
 
     def p_command_call_no_parentheses(self, p):
         """command_call_no_parentheses : command_name argument_list"""
         args = {"arguments": p[2]}
-        p[0] = structures.CommandSpace(p[1], self.manager, **args)
+        p[0] = ms.CommandSpace(p[1], self.manager, **args)
 
     def p_array(self, p):
         """array : LBRACE
@@ -77,11 +77,11 @@ class InteractivePartialParser:
            array : LBRACE argument_list
            array : LBRACE argument_list RBRACE"""
         if len(p) == 2:
-            p[0] = structures.Array(space=p[1:], autoclosing=True)
+            p[0] = ms.Array(space=p[1:], autoclosing=True)
         elif len(p) == 3:
-            p[0] = structures.Array(space=p[1:])
+            p[0] = ms.Array(space=p[1:])
         else:
-            p[0] = structures.Array(space=[p[1], *p[2], p[3]])
+            p[0] = ms.Array(space=[p[1], *p[2], p[3]])
 
     def p_argument_list(self, p):
         """argument_list : empty
