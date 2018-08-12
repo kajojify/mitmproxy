@@ -11,7 +11,7 @@ import sys
 
 import mitmproxy.types
 from mitmproxy import exceptions
-from mitmproxy.language import lexer, parser, traversal
+from mitmproxy import language as lang
 
 
 def verify_arg_signature(f: typing.Callable, args: list, kwargs: dict) -> None:
@@ -183,7 +183,8 @@ class CommandManager(mitmproxy.types._CommandBase):
     def __init__(self, master):
         self.master = master
         self.async_manager = AsyncExecutionManager()
-        self.command_parser = parser.create_parser(self)
+        self.command_parser = lang.parser.create_parser(self)
+        self.partial_parser = lang.partial_parser.create_parser(self)
         self.commands: typing.Dict[str, Command] = {}
         self.oneword_commands: typing.List[str] = []
 
@@ -215,54 +216,17 @@ class CommandManager(mitmproxy.types._CommandBase):
         cmdstr: str
     ) -> typing.Tuple[typing.Sequence[ParseResult], typing.Sequence[str]]:
         """
-            Parse a possibly partial command. Return a sequence of ParseResults and a sequence of remainder type help items.
+            Parse a possibly partial command. Return markup
+            language structures and whitespaces map
         """
-        parts: typing.List[str] = lexer.get_tokens(cmdstr)
-        if not parts:
-            parts = [""]
-        elif parts[-1].isspace():
-            parts.append("")
+        lex = lang.lexer.InteractiveLexer(cmdstr, self.oneword_commands)
 
-        parse: typing.List[ParseResult] = []
-        params: typing.List[type] = []
-        typ: typing.Type = None
-        for i, part in enumerate(parts):
-            typ = mitmproxy.types.Unknown
-            if not part.isspace():
-                if i == 0 or (i == 1 and parts[i - 1].isspace()):
-                    typ = mitmproxy.types.Cmd
-                    if part in self.commands:
-                        params.extend(self.commands[part].paramtypes)
-                elif params:
-                    typ = params.pop(0)
-                    if typ == mitmproxy.types.Cmd and params and params[0] == mitmproxy.types.Arg:
-                        if part in self.commands:
-                            params[:] = self.commands[part].paramtypes
-
-            to = mitmproxy.types.CommandTypes.get(typ, None)
-            valid = False
-            if to:
-                try:
-                    to.parse(self, typ, part)
-                except exceptions.TypeError:
-                    valid = False
-                else:
-                    valid = True
-
-            parse.append(
-                ParseResult(
-                    value=part,
-                    type=typ,
-                    valid=valid,
-                )
-            )
-
-        remhelp: typing.List[str] = []
-        for x in params:
-            remt = mitmproxy.types.CommandTypes.get(x, None)
-            remhelp.append(remt.display)
-
-        return parse, remhelp
+        try:
+            typer = self.partial_parser.parse(lex)
+        except exceptions.CommandError:
+            typer = [("commander_invalid", cmdstr)]
+            lex.whitespace_map = []
+        return typer, lex.whitespace_map
 
     def get_command_by_path(self, path: str) -> Command:
         """
@@ -288,10 +252,10 @@ class CommandManager(mitmproxy.types._CommandBase):
         """
             Schedule a command to be executed. May raise CommandError.
         """
-        lex = lexer.create_lexer(cmdstr, self.oneword_commands)
+        lex = lang.lexer.create_lexer(cmdstr, self.oneword_commands)
         parsed_cmd = self.command_parser.parse(lexer=lex, async_exec=True)
 
-        execution_coro = traversal.execute_parsed_line(parsed_cmd)
+        execution_coro = lang.traversal.execute_parsed_line(parsed_cmd)
         command_task = asyncio.ensure_future(execution_coro)
         self.async_manager.add_command(RunningCommand(cmdstr, command_task))
         return command_task
@@ -300,7 +264,7 @@ class CommandManager(mitmproxy.types._CommandBase):
         """
             Execute a command string. May raise CommandError.
         """
-        lex = lexer.create_lexer(cmdstr, self.oneword_commands)
+        lex = lang.lexer.create_lexer(cmdstr, self.oneword_commands)
         parsed_cmd = self.command_parser.parse(lexer=lex)
         return parsed_cmd
 
